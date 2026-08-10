@@ -20,6 +20,13 @@ over git + the Forgejo REST API.
 | `INSTRUCTOR_GUIDE.md` | reviewing from the CLI or the browser |
 | `MVP_BUILD_PLAN.md` | the plan this implements |
 
+## Live demo (GitHub Pages)
+
+The two static web artifacts — the published book (clickable paragraph
+blame + vouches) and a rendered AST diff for a pending change — are
+deployed to GitHub Pages by `.github/workflows/pages.yml`:
+**https://fhell.github.io/CollectiveKnowledge/** (built from `demo/`).
+
 ## Quick start (local, no server)
 
 ```sh
