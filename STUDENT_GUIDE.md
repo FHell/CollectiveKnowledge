@@ -1,6 +1,10 @@
 # Student guide
 
-You write; the tool handles git. Five commands total.
+You write; the tool handles git. Five commands total — or no commands
+at all: on the published book site you can sign in with your token
+(bottom-right), tap any paragraph, and use ✏️ **edit** to propose a
+change straight from the browser. It becomes a pull request exactly as
+if you had used the CLI below.
 
 ## Setup (once)
 

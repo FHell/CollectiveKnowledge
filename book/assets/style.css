@@ -50,3 +50,72 @@ h1, h2, h3 { font-family: system-ui, sans-serif; line-height: 1.25; }
 .bk-pop-vouch { color: #14520f; }
 .bk-pop-none { color: #888; font-style: italic; }
 .bk-pop code { font-size: 0.78rem; color: #666; }
+
+/* --- web actions (sign-in, popup buttons, modals, review bar) --- */
+.bk-authbar {
+  position: fixed; right: 0.8rem; bottom: 0.8rem; z-index: 20;
+  background: #fff; border: 1px solid #ccc; border-radius: 999px;
+  padding: 0.35rem 0.9rem; font-family: system-ui, sans-serif;
+  font-size: 0.8rem; box-shadow: 0 2px 8px rgba(0,0,0,0.12);
+  display: flex; gap: 0.6rem; align-items: center;
+}
+.bk-authlink { color: #1c4b82; cursor: pointer; text-decoration: none; }
+.bk-authlink:hover { text-decoration: underline; }
+
+.bk-actions { margin-top: 0.5rem; display: flex; gap: 0.4rem; flex-wrap: wrap; }
+.bk-btn {
+  font-family: system-ui, sans-serif; font-size: 0.78rem;
+  padding: 0.25rem 0.6rem; border: 1px solid #bbb; border-radius: 6px;
+  background: #f7f5f0; cursor: pointer; color: #333; text-decoration: none;
+  display: inline-block;
+}
+.bk-btn:hover { background: #eee9dd; }
+.bk-btn-primary { background: #1c4b82; border-color: #1c4b82; color: #fff; }
+.bk-btn-primary:hover { background: #163c69; }
+
+.bk-discussions { margin-top: 0.4rem; display: flex; flex-direction: column; gap: 0.15rem; }
+.bk-disc-link { font-size: 0.78rem; color: #1c4b82; text-decoration: none; }
+.bk-disc-link:hover { text-decoration: underline; }
+
+.bk-modal-back {
+  position: fixed; inset: 0; background: rgba(0,0,0,0.35); z-index: 30;
+  display: flex; align-items: center; justify-content: center; padding: 1rem;
+}
+.bk-modal {
+  background: #fff; border-radius: 10px; padding: 1rem 1.2rem;
+  width: 100%; max-width: 38rem; max-height: 90vh; overflow: auto;
+  font-family: system-ui, sans-serif;
+  box-shadow: 0 10px 40px rgba(0,0,0,0.3);
+}
+.bk-modal h3 { margin: 0 0 0.6rem; font-size: 1rem; }
+.bk-modal-row { display: flex; justify-content: flex-end; gap: 0.5rem; margin-top: 0.7rem; }
+.bk-ta {
+  width: 100%; box-sizing: border-box; font-size: 0.9rem; padding: 0.45rem;
+  border: 1px solid #bbb; border-radius: 6px; margin-top: 0.5rem;
+  font-family: ui-monospace, monospace;
+}
+.bk-hint { font-size: 0.82rem; color: #555; margin: 0.2rem 0; }
+
+.bk-toast {
+  position: fixed; left: 50%; bottom: 3.2rem; transform: translateX(-50%) translateY(20px);
+  background: #1a1a1a; color: #fff; border-radius: 8px; padding: 0.5rem 1rem;
+  font-family: system-ui, sans-serif; font-size: 0.85rem; z-index: 40;
+  opacity: 0; transition: all 0.25s; max-width: 90vw;
+}
+.bk-toast-show { opacity: 1; transform: translateX(-50%) translateY(0); }
+.bk-toast-err { background: #8f1d1d; }
+
+.bk-reviewbar {
+  position: fixed; left: 50%; bottom: 0.8rem; transform: translateX(-50%);
+  z-index: 20; background: #fff; border: 1px solid #ccc; border-radius: 999px;
+  padding: 0.4rem 0.9rem; display: flex; gap: 0.45rem; align-items: center;
+  font-family: system-ui, sans-serif; font-size: 0.85rem;
+  box-shadow: 0 2px 10px rgba(0,0,0,0.15); flex-wrap: wrap; max-width: 95vw;
+}
+.bk-review-title { font-weight: 600; }
+.bk-review-state { color: #8f1d1d; }
+
+.bk-change { margin: 0.45rem 0; font-size: 0.95rem; }
+.bk-change a { color: #1c4b82; text-decoration: none; }
+.bk-change a:hover { text-decoration: underline; }
+.bk-change-meta { color: #777; font-size: 0.82rem; }

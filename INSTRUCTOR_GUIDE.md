@@ -37,7 +37,19 @@ content hash, so they go stale automatically if the text changes later.
 
 CI rebuilds and redeploys the public book on every merge.
 
-## Web-only workflow (browser, any machine)
+## Web-only workflow (published site, any device)
+
+The published book site is itself a review surface. Sign in once with
+your token (bottom-right corner):
+
+- the landing page lists **changes under review**, each linking to its
+  rendered diff;
+- every diff page has a review bar: **approve**, **request changes**,
+  **merge** (merge commit — authorship preserved);
+- on book pages, tap a paragraph to **vouch** (committed directly to
+  `main` with your token) or **discuss**.
+
+Everything below also works from the forge's own PR pages:
 
 1. Open the Forgejo repo → *Pull requests*. Each change is a PR.
 2. The CI bot comments a **Rendered diff** link on every PR — that page is

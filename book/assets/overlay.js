@@ -57,6 +57,15 @@
     }
     var p = popup();
     p.innerHTML = html;
+    // let the (optional) web-actions layer add discuss/vouch/edit controls
+    if (window.BookWebActions) {
+      var main = target.closest("[data-source]");
+      window.BookWebActions.decorate(p, {
+        hash: h,
+        excerpt: target.textContent.slice(0, 200),
+        source: (b && b.file) || (main && main.getAttribute("data-source")) || "",
+      });
+    }
     var r = target.getBoundingClientRect();
     p.style.top = window.scrollY + r.bottom + 6 + "px";
     p.style.left = window.scrollX + r.left + "px";

@@ -12,20 +12,36 @@ over git + the Forgejo REST API.
 
 | Path | What it is |
 |---|---|
-| `book/` | the `book` CLI (`pip install .`) — init, build, blame, diff, vouch, change, save, clone, submit, changes, review, approve |
-| `.forgejo/workflows/` | CI: rendered AST-diff per PR + site deploy on merge |
-| `infra/` | docker-compose (Forgejo + Actions runner + nginx), bootstrap script |
+| `chapters/`, `meta/` | the book itself: content + committed vouch records |
+| `book/` | the `book` CLI (`pip install .`) — init, build, blame, diff, vouch, change, save, clone, submit, changes, review, approve; works against GitHub and Forgejo/Gitea remotes |
+| `book/assets/` | site runtime: overlay (blame/vouch popups), `forge-client.js` + `web-actions.js` (browser client for the forge API) |
+| `site/` | landing page + site assembly script used by the Pages workflow |
+| `.github/workflows/pages.yml` | builds book + per-open-PR rendered diffs, deploys to Pages |
+| `.forgejo/workflows/` | CI for the self-hosted Forgejo variant |
+| `infra/` | docker-compose (Forgejo + Actions runner + nginx), bootstrap script — optional, only for self-hosting |
 | `tests/` | `smoke.sh` (local workflow) and `remote_roundtrip.sh` (full student/instructor round trip against a stub Forgejo API) |
 | `STUDENT_GUIDE.md` | one page: from nothing to a submitted change |
 | `INSTRUCTOR_GUIDE.md` | reviewing from the CLI or the browser |
 | `MVP_BUILD_PLAN.md` | the plan this implements |
 
-## Live demo (GitHub Pages)
+## The live book (GitHub Pages)
 
-The two static web artifacts — the published book (clickable paragraph
-blame + vouches) and a rendered AST diff for a pending change — are
-deployed to GitHub Pages by `.github/workflows/pages.yml`:
-**https://fhell.github.io/CollectiveKnowledge/** (built from `demo/`).
+**This repository is a book**: `chapters/` at the root are the content,
+and **https://fhell.github.io/CollectiveKnowledge/** is the published
+site, rebuilt by `.github/workflows/pages.yml` on every merge and on
+every change to an open PR.
+
+The site is static, but fully interactive with no server of our own:
+the browser talks directly to the GitHub API (CORS-open) with a
+user-supplied fine-grained token stored in `localStorage`. Tap a
+paragraph to see blame + vouches and to **discuss** (opens an issue
+keyed to the paragraph's content hash), **vouch** (commits to
+`meta/vouches.yaml`, or opens a PR when `main` is protected for you),
+or **edit** (branch + commit + PR via the contents API). Rendered diff
+pages for open changes carry a review bar (approve / request changes /
+merge — always a merge commit). Git remains the database; CI re-renders
+what you see. ORCID OAuth sign-in is planned (requires a small
+token-exchange service; a pasted token needs none).
 
 ## Quick start (local, no server)
 

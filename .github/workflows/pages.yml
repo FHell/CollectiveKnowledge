@@ -1,10 +1,18 @@
-# Deploy the web-workflow demo (built book + rendered diff + landing page)
-# to GitHub Pages, so the review surfaces can be inspected from any device.
+# Build and deploy the site to GitHub Pages:
+#   /            landing page with live open-changes list
+#   /book/       the published book (this repository IS the book)
+#   /diffs/pr-N/ rendered AST diff + review bar for every open PR
+#
+# Runs on push to main, on PR open/update (pull_request_target so the
+# workflow definition and the checkout always come from main — PR content
+# is only read as data via `git show`, never executed), and on demand.
 name: pages
 
 on:
   push:
     branches: [main]
+  pull_request_target:
+    types: [opened, synchronize, reopened, closed]
   workflow_dispatch:
 
 permissions:
@@ -21,6 +29,9 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
+        with:
+          ref: main            # never build the site from PR code
+          fetch-depth: 0       # blame needs history
 
       - uses: actions/setup-python@v5
         with:
@@ -29,14 +40,13 @@ jobs:
       - name: Install book tool
         run: pip install --quiet .
 
-      - name: Build demo site
-        run: demo/build_demo_site.sh public
+      - name: Build site (book + per-PR diffs)
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: site/build_site.sh public
 
       - name: Configure Pages
         uses: actions/configure-pages@v5
-        with:
-          # creates the Pages site on first run if it doesn't exist yet
-          enablement: true
 
       - uses: actions/upload-pages-artifact@v3
         with:

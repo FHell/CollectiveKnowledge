@@ -1,0 +1,6 @@
+[book]
+title = "Collective Knowledge"
+
+[site]
+base_url = "https://fhell.github.io/CollectiveKnowledge"
+diffs_url = "https://fhell.github.io/CollectiveKnowledge/diffs"

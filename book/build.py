@@ -33,10 +33,12 @@ PAGE_TEMPLATE = """<!DOCTYPE html>
 </head>
 <body>
 <nav class="bk-nav">{nav}</nav>
-<main class="bk-main">
+<main class="bk-main" data-source="{source}">
 {body}
 </main>
+<script src="forge-client.js"></script>
 <script src="overlay.js"></script>
+<script src="web-actions.js" data-base="./"></script>
 </body>
 </html>
 """
@@ -129,12 +131,9 @@ def build(root: Path, out_dir: Path | None = None) -> Path:
         body, title = render_page_body(text)
         outname = Path(rel).stem + ".html"
         pages.append((rel, outname, title or Path(rel).stem))
-        nav = ' · '.join(
-            f'<a href="{o}">{t}</a>' for _, o, t in pages
-        )  # placeholder, rewritten below
         (out / outname).write_text(
             PAGE_TEMPLATE.format(title=title or book_title, nav="", body=body,
-                                 mathjax=MATHJAX_URL)
+                                 mathjax=MATHJAX_URL, source=rel)
         )
 
     # nav bar (index + all chapters) written into every page in a 2nd pass
@@ -155,6 +154,7 @@ def build(root: Path, out_dir: Path | None = None) -> Path:
             nav=nav_html,
             body=f"<h1>{book_title}</h1>\n<ul class='bk-toc'>\n{toc_items}\n</ul>",
             mathjax=MATHJAX_URL,
+            source="",
         )
     )
 
@@ -176,6 +176,39 @@ def build(root: Path, out_dir: Path | None = None) -> Path:
     # vouches.json — hash -> list of vouch records
     (out / "vouches.json").write_text(json.dumps(_load_vouches(root), indent=1))
 
-    for asset in ("style.css", "overlay.js"):
+    for asset in ("style.css", "overlay.js", "forge-client.js", "web-actions.js"):
         shutil.copy(ASSETS / asset, out / asset)
+
+    # forge.json — lets the in-browser client (web-actions.js) talk to the
+    # forge API. Best-effort: without an origin remote the site is
+    # read-only and the interactive layer disables itself.
+    forge_cfg = forge_site_config(root)
+    if forge_cfg:
+        (out / "forge.json").write_text(json.dumps(forge_cfg, indent=1))
     return out
+
+
+def forge_site_config(root: Path) -> dict | None:
+    from .config import remote_coords
+
+    try:
+        base, owner, name = remote_coords(root)
+    except Exception:
+        return None
+    if not base:
+        return None
+    from urllib.parse import urlparse
+
+    host = urlparse(base).netloc
+    if host == "github.com":
+        provider, api = "github", "https://api.github.com"
+    else:
+        provider, api = "gitea", f"{base.rstrip('/')}/api/v1"
+    return {
+        "provider": provider,
+        "api": api,
+        "owner": owner,
+        "repo": name,
+        "branch": "main",
+        "html": f"{base.rstrip('/')}/{owner}/{name}",
+    }

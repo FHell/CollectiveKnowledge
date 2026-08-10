@@ -299,6 +299,7 @@ def render_diff(
     head_ref: str | None = None,
     out_path: Path | str | None = None,
     title: str | None = None,
+    web_actions: dict | None = None,
 ) -> Path:
     """Render an HTML diff of the book between two refs.
 
@@ -356,6 +357,19 @@ def render_diff(
         f'<script defer src="{MATHJAX_URL}"></script>\n</head>'
     )
     html = html.replace("</head>", inject, 1)
+    if web_actions:
+        # attach the interactive review bar (approve / request changes /
+        # merge) — web_actions = {"base": "../../", "pr": <number>}
+        base = web_actions.get("base", "../../")
+        pr = web_actions["pr"]
+        scripts = (
+            f'<link rel="stylesheet" href="{base}style.css">\n'
+            f"<script>window.BOOK_DIFF_PR = {int(pr)};</script>\n"
+            f'<script src="{base}forge-client.js"></script>\n'
+            f'<script src="{base}web-actions.js" data-base="{base}"></script>\n'
+            "</body>"
+        )
+        html = html.replace("</body>", scripts, 1)
     Path(out).write_text(html)
     return Path(out)
 

@@ -1,0 +1,4 @@
+format: book
+chapters:
+  - file: chapters/01-about.md
+  - file: chapters/02-heat-equation.md
