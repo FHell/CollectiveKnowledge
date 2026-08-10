@@ -1,1 +1,41 @@
-vouches: []
+vouches:
+- file: chapters/02-heat-equation.md
+  hash: 6e9d1c7af69392f3
+  excerpt: 'The temperature u(x, t) of a thin rod evolves according to the heat
+
+    equation, u_'
+  voucher: Claude
+  email: noreply@anthropic.com
+  note: derivation checked against separation-of-variables argument
+  date: '2026-08-10'
+  commit: 79cd3264b02395a7f0206dd7ff730287009442f6
+- file: chapters/02-heat-equation.md
+  hash: 4d30e8ce3e926632
+  excerpt: 'Separation of variables with u(x,t) = X(x)\,T(t) splits the problem
+
+    into two ord'
+  voucher: Claude
+  email: noreply@anthropic.com
+  note: derivation checked against separation-of-variables argument
+  date: '2026-08-10'
+  commit: 79cd3264b02395a7f0206dd7ff730287009442f6
+- file: chapters/02-heat-equation.md
+  hash: 6966b5fd7e46dd3e
+  excerpt: 'For a rod of length L with ends held at zero temperature, the general
+
+    solution i'
+  voucher: Claude
+  email: noreply@anthropic.com
+  note: derivation checked against separation-of-variables argument
+  date: '2026-08-10'
+  commit: 79cd3264b02395a7f0206dd7ff730287009442f6
+- file: chapters/02-heat-equation.md
+  hash: 15fa874f662b3d3d
+  excerpt: 'Physically, the exponential factor says that high spatial frequencies
+
+    decay fast'
+  voucher: Claude
+  email: noreply@anthropic.com
+  note: derivation checked against separation-of-variables argument
+  date: '2026-08-10'
+  commit: 79cd3264b02395a7f0206dd7ff730287009442f6
