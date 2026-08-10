@@ -1,0 +1,71 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Collective Knowledge — web workflow demo</title>
+<style>
+  :root { color-scheme: light; }
+  body { font-family: system-ui, -apple-system, sans-serif; line-height: 1.6;
+         color: #1a1a1a; background: #faf9f6; max-width: 44rem;
+         margin: 0 auto; padding: 1.2rem 1rem 4rem; }
+  h1 { font-size: 1.45rem; line-height: 1.3; }
+  h2 { font-size: 1.05rem; margin-top: 2rem; color: #444; }
+  .card { display: block; border: 1px solid #ddd; border-radius: 10px;
+          background: #fff; padding: 1rem 1.1rem; margin: 1rem 0;
+          text-decoration: none; color: inherit;
+          box-shadow: 0 1px 3px rgba(0,0,0,.06); }
+  .card:active { background: #f5f2ea; }
+  .card b { color: #1c4b82; font-size: 1.05rem; }
+  .card p { margin: .4rem 0 0; color: #555; font-size: .92rem; }
+  .steps { border-left: 3px solid #ddd; padding-left: 1rem; }
+  .steps li { margin: .5rem 0; }
+  .note { font-size: .88rem; color: #666; background: #f4f1e8;
+          border-radius: 8px; padding: .7rem .9rem; }
+  code { background: #efece4; padding: .1em .35em; border-radius: 4px;
+         font-size: .88em; }
+</style>
+</head>
+<body>
+<h1>Collective Knowledge<br>web-workflow demo</h1>
+
+<p>Students push text; the instructor reviews, edits and approves —
+from the command line or entirely in the browser. This page hosts the
+two <em>web</em> artifacts of that workflow, built by the real tool from
+a real demo repository.</p>
+
+<a class="card" href="book/">
+  <b>&#128214; The published book</b>
+  <p>What readers see after each merge. <strong>Tap any paragraph</strong>
+  to see who wrote it (git blame, paragraph by paragraph) and who vouches
+  for it. Vouched paragraphs carry a green edge.</p>
+</a>
+
+<a class="card" href="diffs/pr-2/">
+  <b>&#128269; Rendered diff of a pending change</b>
+  <p>Alice proposes replacing &alpha; with &kappa; in the heat-equation
+  chapter. This is the page CI attaches to every pull request —
+  insertions green, deletions red, and the changed <em>symbol inside the
+  typeset formula</em> individually highlighted.</p>
+</a>
+
+<h2>How a change flows through the system</h2>
+<ol class="steps">
+  <li>Student: <code>book change new</code> → edit → <code>book save</code>
+      → <code>book submit</code></li>
+  <li>A pull request appears on the course Forgejo; CI posts a rendered-diff
+      link (the page above) as a comment.</li>
+  <li>Instructor reviews from the PR page: discuss, <em>request changes</em>,
+      or press the merge button — or does the same from the CLI with
+      <code>book review</code> / <code>book approve --vouch</code>.</li>
+  <li>On merge, CI rebuilds and redeploys the book (the site above), with
+      the student's authorship preserved for paragraph-level blame.</li>
+</ol>
+
+<p class="note">The review surface itself — PR pages, comments, the merge
+button — is <a href="https://forgejo.org">Forgejo</a>, a server, so it
+can't be hosted on GitHub Pages. This demo shows the two custom static
+artifacts the system adds around it. Deployment of the full stack:
+<code>infra/README.md</code> in the repository.</p>
+</body>
+</html>
