@@ -1,0 +1,44 @@
+# On every PR open/update: render the AST-level HTML diff, publish it to
+# the static host, and keep a single up-to-date link comment on the PR.
+name: pr-diff
+
+on:
+  pull_request:
+    types: [opened, synchronize, reopened]
+
+jobs:
+  rendered-diff:
+    runs-on: docker
+    container:
+      image: python:3.12-slim-bookworm
+      volumes:
+        - book-site:/site   # whitelisted in infra/runner-config.yml
+    steps:
+      - name: Install git
+        run: apt-get update -qq && apt-get install -y -qq git >/dev/null
+
+      - name: Checkout PR head
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Install book tool
+        run: |
+          git config --global --add safe.directory "$(pwd)"
+          pip install --quiet .
+
+      - name: Render diff against base
+        run: |
+          git fetch origin ${{ github.base_ref }}
+          book diff origin/${{ github.base_ref }} --render -o rendered-diff.html
+
+      - name: Publish to static host
+        run: |
+          mkdir -p /site/diffs/pr-${{ github.event.number }}
+          cp rendered-diff.html /site/diffs/pr-${{ github.event.number }}/index.html
+
+      - name: Comment link on PR (create once, then edit in place)
+        env:
+          BOOK_TOKEN: ${{ secrets.CI_TOKEN }}
+          SITE_URL: ${{ vars.SITE_URL }}
+        run: python .forgejo/scripts/post_diff_comment.py ${{ github.event.number }}

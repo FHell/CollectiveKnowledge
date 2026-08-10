@@ -1,0 +1,14 @@
+# Forgejo Actions runner configuration.
+# Job containers may mount the shared site volume; that is how CI publishes
+# the built book and the per-PR rendered diffs to nginx.
+log:
+  level: info
+
+runner:
+  capacity: 2
+  timeout: 30m
+
+container:
+  network: bridge
+  valid_volumes:
+    - book-site

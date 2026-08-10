@@ -1,0 +1,26 @@
+[build-system]
+requires = ["setuptools>=68"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "book-cli"
+version = "0.1.0"
+description = "Collaborative document engine: git-backed book writing, reviewing and vouching"
+readme = "README.md"
+requires-python = ">=3.10"
+dependencies = [
+    "myst-parser>=2.0",
+    "docutils>=0.19",
+    "requests>=2.28",
+    "PyYAML>=6.0",
+    "click>=8.1",
+]
+
+[project.scripts]
+book = "book.cli:main"
+
+[tool.setuptools]
+packages = ["book"]
+
+[tool.setuptools.package-data]
+book = ["assets/*"]

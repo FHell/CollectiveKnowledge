@@ -1,0 +1,38 @@
+# On every push to main: rebuild the book and deploy it to the static host.
+name: deploy
+
+on:
+  push:
+    branches: [main]
+
+jobs:
+  build-and-deploy:
+    runs-on: docker
+    container:
+      image: python:3.12-slim-bookworm
+      volumes:
+        - book-site:/site   # whitelisted in infra/runner-config.yml
+    steps:
+      - name: Install git
+        run: apt-get update -qq && apt-get install -y -qq git >/dev/null
+
+      - name: Checkout main
+        uses: actions/checkout@v4
+
+      - name: Install book tool
+        run: |
+          git config --global --add safe.directory "$(pwd)"
+          pip install --quiet .
+
+      - name: Build site
+        run: book build
+
+      - name: Deploy
+        run: |
+          mkdir -p /site/book
+          rm -rf /site/book.new
+          cp -r _build/html /site/book.new
+          rm -rf /site/book.old
+          mv /site/book /site/book.old 2>/dev/null || true
+          mv /site/book.new /site/book
+          rm -rf /site/book.old
