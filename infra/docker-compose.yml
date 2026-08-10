@@ -1,0 +1,65 @@
+# Forgejo + Actions runner + nginx for the collaborative book.
+#
+#   forgejo  — repo hosting, users, PRs (unmodified, self-hosted)
+#   runner   — executes .forgejo/workflows/ (diff previews + site deploy)
+#   nginx    — serves the built book at /  and rendered diffs at /diffs/
+#
+# The `book-site` volume is the only glue: CI jobs write into it, nginx
+# serves it. See infra/README.md for bootstrap + runner registration.
+
+services:
+  forgejo:
+    image: codeberg.org/forgejo/forgejo:11  # pin: update deliberately
+    environment:
+      - USER_UID=1000
+      - USER_GID=1000
+      - FORGEJO__server__ROOT_URL=${FORGEJO_ROOT_URL:-http://localhost:3000/}
+      - FORGEJO__server__DOMAIN=${FORGEJO_DOMAIN:-localhost}
+      - FORGEJO__actions__ENABLED=true
+      - FORGEJO__service__DISABLE_REGISTRATION=true  # accounts via bootstrap.sh
+      - FORGEJO__repository__DEFAULT_BRANCH=main
+    volumes:
+      - forgejo-data:/data
+    ports:
+      - "3000:3000"   # HTTP (clone + web UI + API)
+      - "2222:22"     # SSH (optional; HTTPS+token is the documented default)
+    restart: unless-stopped
+
+  runner:
+    image: data.forgejo.org/forgejo/runner:6
+    depends_on:
+      - forgejo
+    environment:
+      DOCKER_HOST: unix:///var/run/docker.sock
+    volumes:
+      - runner-data:/data
+      - ./runner-config.yml:/data/config.yml:ro
+      - /var/run/docker.sock:/var/run/docker.sock
+    working_dir: /data
+    command: >
+      bash -c '
+        while [ ! -f /data/.runner ]; do
+          echo "runner not registered yet — see infra/README.md"; sleep 10;
+        done;
+        forgejo-runner daemon --config /data/config.yml
+      '
+    restart: unless-stopped
+
+  nginx:
+    image: nginx:1.27-alpine
+    depends_on:
+      - forgejo
+    volumes:
+      - ./nginx.conf:/etc/nginx/conf.d/default.conf:ro
+      - book-site:/srv/site:ro
+    ports:
+      - "8080:80"
+    restart: unless-stopped
+
+volumes:
+  forgejo-data:
+  runner-data:
+  book-site:
+    # fixed name so CI job containers can mount it as `book-site`
+    # (runner-config.yml whitelists it via valid_volumes)
+    name: book-site
