@@ -73,10 +73,57 @@
     return false;
   }
 
-  // ---- sign-in bar -----------------------------------------------------------
+  // ---- sign-in: OAuth (via token-exchange worker) and pasted token -------------
+
+  function siteRoot() {
+    return new URL(BASE, window.location.href).href;
+  }
+
+  function startOAuth(cfg) {
+    var state = Math.random().toString(36).slice(2) + Date.now().toString(36);
+    sessionStorage.setItem("bk-oauth-state", state);
+    window.location.href = "https://github.com/login/oauth/authorize" +
+      "?client_id=" + encodeURIComponent(cfg.oauth.client_id) +
+      "&redirect_uri=" + encodeURIComponent(siteRoot()) +
+      "&scope=public_repo&state=" + state;
+  }
+
+  function handleOAuthReturn(cfg) {
+    if (!cfg || !cfg.oauth) return;
+    var params = new URLSearchParams(window.location.search);
+    var code = params.get("code");
+    if (!code) return;
+    var expected = sessionStorage.getItem("bk-oauth-state");
+    sessionStorage.removeItem("bk-oauth-state");
+    window.history.replaceState(null, "", window.location.pathname);
+    if (!expected || params.get("state") !== expected) {
+      toast("Sign-in failed: state mismatch — please try again.", true);
+      return;
+    }
+    fetch(cfg.oauth.exchange_url, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ code: code }),
+    }).then(function (r) { return r.json(); }).then(function (d) {
+      if (!d.access_token) throw new Error(d.error || "no token returned");
+      F.signIn(d.access_token);
+      toast("Signed in with GitHub.");
+      renderBar();
+    }).catch(function (e) {
+      toast("Sign-in failed: " + (e.message || e), true);
+    });
+  }
 
   function signInDialog() {
     var wrap = el("div");
+    var cfg = F.config();
+    if (cfg && cfg.oauth) {
+      var oauthBtn = el("button", "bk-btn bk-btn-primary", "Sign in with GitHub");
+      oauthBtn.style.width = "100%";
+      oauthBtn.onclick = function () { startOAuth(cfg); };
+      wrap.appendChild(oauthBtn);
+      wrap.appendChild(el("p", "bk-hint", "— or paste a token —"));
+    }
     var p = el("p", "bk-hint");
     p.innerHTML = "Paste a personal access token for this repository " +
       "(fine-grained, scoped to Contents, Pull requests and Issues — " +
@@ -304,6 +351,7 @@
     if (window.BOOK_DIFF_PR) reviewBar(window.BOOK_DIFF_PR);
     var list = document.getElementById("bk-changes");
     if (list) changesList(list);
+    F.ready.then(handleOAuthReturn);
   }
 
   if (document.readyState === "loading") {

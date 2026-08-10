@@ -4,3 +4,9 @@ title = "Collective Knowledge"
 [site]
 base_url = "https://fhell.github.io/CollectiveKnowledge"
 diffs_url = "https://fhell.github.io/CollectiveKnowledge/diffs"
+
+# Uncomment once the token-exchange worker is deployed (worker/README.md)
+# to enable one-click "Sign in with GitHub" on the site:
+# [oauth]
+# client_id = "<GitHub OAuth app client id>"
+# exchange_url = "https://collective-knowledge-oauth.<account>.workers.dev/exchange"

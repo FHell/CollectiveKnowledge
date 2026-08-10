@@ -204,7 +204,7 @@ def forge_site_config(root: Path) -> dict | None:
         provider, api = "github", "https://api.github.com"
     else:
         provider, api = "gitea", f"{base.rstrip('/')}/api/v1"
-    return {
+    cfg = {
         "provider": provider,
         "api": api,
         "owner": owner,
@@ -212,3 +212,17 @@ def forge_site_config(root: Path) -> dict | None:
         "branch": "main",
         "html": f"{base.rstrip('/')}/{owner}/{name}",
     }
+    # optional OAuth sign-in (book.toml [oauth]): client_id + the
+    # token-exchange worker URL (see worker/README.md)
+    import tomllib
+
+    try:
+        oauth = tomllib.loads((root / "book.toml").read_text()).get("oauth", {})
+        if oauth.get("client_id") and oauth.get("exchange_url"):
+            cfg["oauth"] = {
+                "client_id": oauth["client_id"],
+                "exchange_url": oauth["exchange_url"],
+            }
+    except FileNotFoundError:
+        pass
+    return cfg
