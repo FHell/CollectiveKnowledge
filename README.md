@@ -23,6 +23,7 @@ over git + the Forgejo REST API.
 | `STUDENT_GUIDE.md` | one page: from nothing to a submitted change |
 | `INSTRUCTOR_GUIDE.md` | reviewing from the CLI or the browser |
 | `MVP_BUILD_PLAN.md` | the plan this implements |
+| `KNOWLEDGE_FORGE_ROADMAP.md` | the road ahead: phased plan to a feature-complete Knowledge Forge (fork-based editing for everyone, in-place discussion, validation roles & staleness, offline-first CLI) |
 
 ## The live book (GitHub Pages)
 
