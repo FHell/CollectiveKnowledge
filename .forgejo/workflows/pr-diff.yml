@@ -1,5 +1,12 @@
-# On every PR open/update: render the AST-level HTML diff, publish it to
-# the static host, and keep a single up-to-date link comment on the PR.
+# On every PR open/update: render the AST-level HTML diff page (with the
+# review bar + discussion thread), publish it to the static host, and keep
+# a single up-to-date link comment on the PR. The full-site deploy rebuilds
+# all diff pages too; this workflow just makes the one page appear within
+# a minute of the push.
+#
+# Security invariant: the tool and this workflow always come from main —
+# PR content is only read as data via `git show` inside render_diff,
+# never installed or executed.
 name: pr-diff
 
 on:
@@ -17,25 +24,35 @@ jobs:
       - name: Install git
         run: apt-get update -qq && apt-get install -y -qq git >/dev/null
 
-      - name: Checkout PR head
+      - name: Checkout main (never the PR)
         uses: actions/checkout@v4
         with:
+          ref: main
           fetch-depth: 0
 
-      - name: Install book tool
+      - name: Install book tool (from main)
         run: |
           git config --global --add safe.directory "$(pwd)"
           pip install --quiet .
 
-      - name: Render diff against base
+      - name: Render diff, PR head as data only
         run: |
-          git fetch origin ${{ github.base_ref }}
-          book diff origin/${{ github.base_ref }} --render -o rendered-diff.html
+          git fetch origin "+refs/pull/${{ github.event.number }}/head:refs/remotes/origin/pr-${{ github.event.number }}"
+          python3 - <<'EOF'
+          from book.diff import render_diff
+          n = ${{ github.event.number }}
+          render_diff(
+              ".", "HEAD", f"refs/remotes/origin/pr-{n}",
+              out_path="rendered-diff.html",
+              title=f"Change #{n} vs main",
+              web_actions={"base": "../../", "pr": n},
+          )
+          EOF
 
       - name: Publish to static host
         run: |
-          mkdir -p /site/diffs/pr-${{ github.event.number }}
-          cp rendered-diff.html /site/diffs/pr-${{ github.event.number }}/index.html
+          mkdir -p /site/current/diffs/pr-${{ github.event.number }}
+          cp rendered-diff.html /site/current/diffs/pr-${{ github.event.number }}/index.html
 
       - name: Comment link on PR (create once, then edit in place)
         env:

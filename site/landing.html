@@ -23,12 +23,11 @@
 <body>
 <h1>Collective Knowledge</h1>
 
-<p>A living book under continuous review. Read it, and — signed in with
-a repository token — discuss, vouch for, or propose changes to any
-paragraph, straight from these pages. Every action becomes an issue, a
-commit, or a pull request in the
-<a href="https://github.com/FHell/CollectiveKnowledge">repository</a>;
-this site rebuilds itself after every merge.</p>
+<p>A living book under continuous review. Read it, and — signed in —
+discuss, vouch for, or propose changes to any paragraph, straight from
+these pages. Every action becomes a discussion, a commit, or a change
+under review on this course's own forge; this site rebuilds itself
+after every merge.</p>
 
 <a class="card" href="book/">
   <b>&#128214; Read the book</b>
@@ -40,18 +39,20 @@ this site rebuilds itself after every merge.</p>
 <div id="bk-changes"><p class="bk-hint">loading…</p></div>
 <p class="note">Each change links to its rendered diff — insertions
 green, deletions red, changed symbols highlighted inside typeset
-formulas — with review controls (approve / request changes / merge) for
-maintainers. Diff pages regenerate about a minute after a change is
-opened or updated.</p>
+formulas — with the change's <strong>discussion thread</strong> right
+below it (read it anonymously, reply signed in) and review controls
+(approve / request changes / merge) for maintainers. Diff pages
+regenerate about a minute after a change is opened or updated.</p>
 
 <h2>How it works</h2>
-<p class="note">The site is static files on GitHub Pages; there is no
-server. The browser talks directly to the GitHub API with your token
-(stored only in this browser), git is the database, and CI re-renders
-what you see. The CLI (<code>pipx install book-cli</code>) offers the
-same workflow from a terminal — see the guides in the repository.
-Sign-in via ORCID OAuth is a planned addition (needs a small
-token-exchange service).</p>
+<p class="note">The site is static files; the self-hosted forge behind
+it is the backend. The browser talks directly to the forge API — your
+token or sign-in is stored only in this browser — git is the database,
+and CI re-renders what you see. Discussions, accounts and changes all
+live on the course's own infrastructure; nothing is stored on a
+third-party service. The CLI (<code>pipx install book-cli</code>)
+offers the same workflow from a terminal, offline reviewing included —
+see the guides in the repository.</p>
 
 <script src="forge-client.js"></script>
 <script src="web-actions.js" data-base="./"></script>

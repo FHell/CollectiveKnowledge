@@ -1,48 +1,50 @@
-# CollectiveKnowledge
+# CollectiveKnowledge → Knowledge Forge
 
 A collaborative document engine for course books: students push text, the
-instructor reviews rendered diffs, edits, approves and vouches — via a
-local CLI workflow or entirely in the browser.
+instructor reviews rendered diffs, edits, approves and vouches, and
+everyone discusses proposed edits — via a local CLI workflow or entirely
+in the browser. The backend is a **self-hosted Forgejo**: repository,
+accounts, changes and every discussion live on your own infrastructure.
 
-**Key principle:** metadata lives in git (vouches are committed to
-`meta/`), the forge stays unmodified, and the `book` CLI is a thin layer
-over git + the Forgejo REST API.
+**Key principles:** metadata lives in git (vouches are committed to
+`meta/`), the forge stays unmodified, and the `book` CLI and the
+in-browser client are both thin layers over git + the Forgejo REST API.
 
 ## The pieces
 
 | Path | What it is |
 |---|---|
 | `chapters/`, `meta/` | the book itself: content + committed vouch records |
-| `book/` | the `book` CLI (`pip install .`) — init, build, blame, diff, vouch, change, save, clone, submit, changes, review, approve; works against GitHub and Forgejo/Gitea remotes |
-| `book/assets/` | site runtime: overlay (blame/vouch popups), `forge-client.js` + `web-actions.js` (browser client for the forge API) |
-| `site/` | landing page + site assembly script used by the Pages workflow |
-| `.github/workflows/pages.yml` | builds book + per-open-PR rendered diffs, deploys to Pages |
-| `.forgejo/workflows/` | CI for the self-hosted Forgejo variant |
-| `infra/` | docker-compose (Forgejo + Actions runner + nginx), bootstrap script — optional, only for self-hosting |
-| `tests/` | `smoke.sh` (local workflow) and `remote_roundtrip.sh` (full student/instructor round trip against a stub Forgejo API) |
+| `book/` | the `book` CLI (`pip install .`) — init, build, blame, diff, vouch, change, save, clone, submit, changes, review, comments, comment, approve — against a Forgejo/Gitea remote |
+| `book/assets/` | site runtime: overlay (blame/vouch popups), `forge-client.js` + `web-actions.js` (browser client for the forge API: sign-in, discuss/vouch/edit, review bar, discussion threads) |
+| `site/` | landing page + `build_site.sh`, the site assembly used by CI |
+| `.forgejo/workflows/` | CI: per-PR rendered diff pages + full site deploy |
+| `infra/` | docker-compose (Forgejo + Actions runner + nginx), bootstrap script — this is the deployment |
+| `tests/` | `smoke.sh` (local), `remote_roundtrip.sh` (CLI round trip vs a stub forge), `web_e2e.sh` (headless-browser round trip: read thread, sign in, reply, request changes) |
 | `STUDENT_GUIDE.md` | one page: from nothing to a submitted change |
 | `INSTRUCTOR_GUIDE.md` | reviewing from the CLI or the browser |
-| `MVP_BUILD_PLAN.md` | the plan this implements |
-| `KNOWLEDGE_FORGE_ROADMAP.md` | the road ahead: phased plan to a feature-complete Knowledge Forge (fork-based editing for everyone, in-place discussion, validation roles & staleness, offline-first CLI) |
+| `MVP_BUILD_PLAN.md` | the original MVP plan |
+| `KNOWLEDGE_FORGE_ROADMAP.md` | the road ahead to a feature-complete Knowledge Forge |
 
-## The live book (GitHub Pages)
+## The published site
 
-**This repository is a book**: `chapters/` at the root are the content,
-and **https://fhell.github.io/CollectiveKnowledge/** is the published
-site, rebuilt by `.github/workflows/pages.yml` on every merge and on
-every change to an open PR.
+The deployed system serves a static site (see `infra/`): a landing page
+with the live list of changes under review, the rendered book, and one
+diff page per open change. Anonymous visitors can read everything —
+book, authorship, vouches, diffs, discussions. Signed in (pasted Forgejo
+token, or one-click OAuth2+PKCE — no client secret, no extra service):
 
-The site is static, but fully interactive with no server of our own:
-the browser talks directly to the GitHub API (CORS-open) with a
-user-supplied fine-grained token stored in `localStorage`. Tap a
-paragraph to see blame + vouches and to **discuss** (opens an issue
-keyed to the paragraph's content hash), **vouch** (commits to
-`meta/vouches.yaml`, or opens a PR when `main` is protected for you),
-or **edit** (branch + commit + PR via the contents API). Rendered diff
-pages for open changes carry a review bar (approve / request changes /
-merge — always a merge commit). Git remains the database; CI re-renders
-what you see. ORCID OAuth sign-in is planned (requires a small
-token-exchange service; a pasted token needs none).
+- **tap a paragraph** on a book page to see blame + vouches and to
+  **discuss** (opens a forge issue keyed to the paragraph's content
+  hash), **vouch** (commits to `meta/vouches.yaml`, or opens a change
+  when `main` is protected for you), or **edit** (branch + commit +
+  change via the contents API);
+- **on a diff page**, read the change's whole discussion under the
+  rendered diff, reply in place, and (maintainers) approve / request
+  changes / merge — always a merge commit, so paragraph authorship
+  survives.
+
+Git remains the database; CI re-renders what you see after every merge.
 
 ## Quick start (local, no server)
 
@@ -67,5 +69,7 @@ this repo, register the runner. Students follow `STUDENT_GUIDE.md`.
 ```sh
 pip install -e .
 tests/smoke.sh              # local workflow regression guard
-tests/remote_roundtrip.sh   # remote workflow against a stub forge
+tests/remote_roundtrip.sh   # CLI round trip against a stub forge
+pip install playwright      # once, for the browser test
+tests/web_e2e.sh            # discussions on proposed edits, in a real browser
 ```

@@ -1,14 +1,14 @@
-"""Minimal forge REST API clients: Forgejo/Gitea and GitHub.
+"""Minimal Forgejo/Gitea REST API client.
 
-Token comes from config or the BOOK_TOKEN environment variable; only the
-handful of endpoints the MVP needs are wrapped. `Forge.for_repo()` picks
-the right backend from the origin remote's host.
+The self-hosted forge is the one backend of the system: it hosts the
+repository, the changes (PRs) and the discussions on them. Token comes
+from config or the BOOK_TOKEN environment variable; only the handful of
+endpoints the CLI needs are wrapped.
 """
 
 from __future__ import annotations
 
 from pathlib import Path
-from urllib.parse import urlparse
 
 import requests
 
@@ -31,8 +31,7 @@ class Forge:
     @classmethod
     def for_repo(cls, root: Path) -> "Forge":
         base, owner, name = config.remote_coords(root)
-        impl = GitHubForge if urlparse(base).netloc == "github.com" else Forge
-        return impl(base, owner, name, token=config.token(root))
+        return cls(base, owner, name, token=config.token(root))
 
     # -- plumbing -------------------------------------------------------
 
@@ -93,7 +92,10 @@ class Forge:
             "POST", f"/pulls/{index}/reviews", json={"event": event, "body": body}
         )
 
-    # -- issue comments ---------------------------------------------------
+    def list_reviews(self, index: int) -> list[dict]:
+        return self._req("GET", f"/pulls/{index}/reviews") or []
+
+    # -- issue comments (the discussion on a change) ------------------------
 
     def post_comment(self, index: int, body: str) -> dict:
         return self._req("POST", f"/issues/{index}/comments", json={"body": body})
@@ -115,26 +117,3 @@ class Forge:
             if marker in (comment.get("body") or ""):
                 return self.edit_comment(comment["id"], body)
         return self.post_comment(index, body)
-
-
-class GitHubForge(Forge):
-    """GitHub.com backend — same surface, slightly different endpoints."""
-
-    def _url(self, path: str) -> str:
-        return f"https://api.github.com/repos/{self.owner}/{self.repo}{path}"
-
-    def create_pr(self, head: str, base: str, title: str, body: str = "") -> dict:
-        try:
-            return self._req(
-                "POST", "/pulls",
-                json={"head": head, "base": base, "title": title, "body": body},
-            )
-        except ForgeError as e:
-            if e.status == 422:  # PR for this head already exists
-                existing = self.find_pr(head)
-                if existing:
-                    return existing
-            raise
-
-    def merge_pr(self, index: int, style: str = "merge") -> None:
-        self._req("PUT", f"/pulls/{index}/merge", json={"merge_method": style})

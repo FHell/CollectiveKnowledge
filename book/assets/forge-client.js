@@ -1,10 +1,11 @@
-/* BookForge — browser client for the forge REST API (GitHub or
- * Gitea/Forgejo). The static site has no backend: the forge is the
- * backend, git is the database. The user's token lives in localStorage
- * and is sent only to the forge API origin.
+/* BookForge — browser client for the Forgejo/Gitea REST API. The static
+ * site has no backend of its own: the self-hosted forge is the backend,
+ * git is the database. The user's token lives in localStorage and is
+ * sent only to the forge API origin.
  *
  * Configuration comes from forge.json (written by `book build`):
- *   { provider: "github"|"gitea", api, owner, repo, branch, html }
+ *   { provider: "forgejo", base, api, owner, repo, branch, html,
+ *     oauth?: {client_id} }
  */
 window.BookForge = (function () {
   "use strict";
@@ -27,8 +28,7 @@ window.BookForge = (function () {
 
   function api(method, path, body) {
     var headers = { Accept: "application/json" };
-    if (cfg.provider === "github") headers.Accept = "application/vnd.github+json";
-    if (token()) headers.Authorization = "Bearer " + token();
+    if (token()) headers.Authorization = "token " + token();
     if (body) headers["Content-Type"] = "application/json";
     return fetch(cfg.api + path, {
       method: method,
@@ -57,20 +57,24 @@ window.BookForge = (function () {
   function me() { return api("GET", "/user"); }
 
   function listOpenPRs() {
-    return api("GET", repoPath("/pulls?state=open&per_page=50"));
+    return api("GET", repoPath("/pulls?state=open&limit=50"));
   }
 
   function getPR(n) { return api("GET", repoPath("/pulls/" + n)); }
+
+  function listComments(n) {
+    return api("GET", repoPath("/issues/" + n + "/comments"));
+  }
+
+  function listReviews(n) {
+    return api("GET", repoPath("/pulls/" + n + "/reviews"));
+  }
 
   function getFile(path, ref) {
     return api("GET", repoPath("/contents/" + path + "?ref=" + (ref || cfg.branch)));
   }
 
   function searchDiscussions(hash) {
-    if (cfg.provider === "github") {
-      var q = encodeURIComponent('repo:' + cfg.owner + "/" + cfg.repo + ' "' + hash + '"');
-      return api("GET", "/search/issues?q=" + q).then(function (r) { return r.items || []; });
-    }
     return api("GET", repoPath("/issues?q=" + encodeURIComponent(hash) + "&type=issue&state=all"));
   }
 
@@ -85,13 +89,6 @@ window.BookForge = (function () {
   }
 
   function createBranch(name) {
-    if (cfg.provider === "github") {
-      return api("GET", repoPath("/git/ref/heads/" + cfg.branch)).then(function (ref) {
-        return api("POST", repoPath("/git/refs"), {
-          ref: "refs/heads/" + name, sha: ref.object.sha,
-        });
-      });
-    }
     return api("POST", repoPath("/branches"), {
       new_branch_name: name, old_branch_name: cfg.branch,
     });
@@ -110,14 +107,12 @@ window.BookForge = (function () {
   }
 
   function review(n, event, body) {
+    // Gitea/Forgejo review events: APPROVED | REQUEST_CHANGES | COMMENT
     return api("POST", repoPath("/pulls/" + n + "/reviews"), { event: event, body: body || "" });
   }
 
   function mergePR(n) {
-    if (cfg.provider === "github") {
-      // merge commit, never squash: preserves per-paragraph authorship
-      return api("PUT", repoPath("/pulls/" + n + "/merge"), { merge_method: "merge" });
-    }
+    // merge commit, never squash: preserves per-paragraph authorship
     return api("POST", repoPath("/pulls/" + n + "/merge"), { Do: "merge" });
   }
 
@@ -199,6 +194,7 @@ window.BookForge = (function () {
     token: token, signIn: signIn, signOut: signOut,
     me: me, config: function () { return cfg; },
     listOpenPRs: listOpenPRs, getPR: getPR, getFile: getFile, b64decode: b64decode,
+    listComments: listComments, listReviews: listReviews,
     searchDiscussions: searchDiscussions,
     proposeEdit: proposeEdit, vouch: vouch, discuss: discuss,
     review: review, mergePR: mergePR, commentOnIssue: commentOnIssue,

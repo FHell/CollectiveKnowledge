@@ -1,8 +1,10 @@
 # Forgejo + Actions runner + nginx for the collaborative book.
 #
-#   forgejo  — repo hosting, users, PRs (unmodified, self-hosted)
+#   forgejo  — the backend: repo hosting, users, changes (PRs) and the
+#              discussions on them (unmodified, self-hosted)
 #   runner   — executes .forgejo/workflows/ (diff previews + site deploy)
-#   nginx    — serves the built book at /  and rendered diffs at /diffs/
+#   nginx    — serves the published site: landing at /, book at /book/,
+#              rendered diffs + discussion at /diffs/pr-N/
 #
 # The `book-site` volume is the only glue: CI jobs write into it, nginx
 # serves it. See infra/README.md for bootstrap + runner registration.
@@ -18,6 +20,11 @@ services:
       - FORGEJO__actions__ENABLED=true
       - FORGEJO__service__DISABLE_REGISTRATION=true  # accounts via bootstrap.sh
       - FORGEJO__repository__DEFAULT_BRANCH=main
+      # the published site (nginx origin) talks to the forge API and the
+      # OAuth token endpoint directly from the browser — allow it
+      - FORGEJO__cors__ENABLED=true
+      - FORGEJO__cors__ALLOW_DOMAIN=${SITE_ORIGIN:-*}
+      - FORGEJO__cors__HEADERS=Authorization,Content-Type,Accept
     volumes:
       - forgejo-data:/data
     ports:

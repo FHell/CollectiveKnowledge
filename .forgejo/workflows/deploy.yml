@@ -1,4 +1,5 @@
-# On every push to main: rebuild the book and deploy it to the static host.
+# On every push to main: rebuild the whole public site (landing + book +
+# per-open-PR diff pages) and swap it into place on the static host.
 name: deploy
 
 on:
@@ -13,26 +14,29 @@ jobs:
       volumes:
         - book-site:/site   # whitelisted in infra/runner-config.yml
     steps:
-      - name: Install git
-        run: apt-get update -qq && apt-get install -y -qq git >/dev/null
+      - name: Install git and curl
+        run: apt-get update -qq && apt-get install -y -qq git curl >/dev/null
 
       - name: Checkout main
         uses: actions/checkout@v4
+        with:
+          fetch-depth: 0   # blame needs history
 
       - name: Install book tool
         run: |
           git config --global --add safe.directory "$(pwd)"
           pip install --quiet .
 
-      - name: Build site
-        run: book build
+      - name: Build site (landing + book + per-PR diffs)
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: site/build_site.sh site-out
 
-      - name: Deploy
+      - name: Deploy (atomic swap)
         run: |
-          mkdir -p /site/book
-          rm -rf /site/book.new
-          cp -r _build/html /site/book.new
-          rm -rf /site/book.old
-          mv /site/book /site/book.old 2>/dev/null || true
-          mv /site/book.new /site/book
-          rm -rf /site/book.old
+          rm -rf /site/new
+          cp -r site-out /site/new
+          rm -rf /site/old
+          [ -d /site/current ] && mv /site/current /site/old || true
+          mv /site/new /site/current
+          rm -rf /site/old
