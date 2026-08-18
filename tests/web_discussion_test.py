@@ -65,7 +65,7 @@ def main() -> int:
         page.locator(".bk-authbar .bk-authlink").click()
         dialog = page.locator(".bk-modal")
         dialog.locator("input[type=password]").fill("carol")
-        dialog.get_by_role("button", name="Sign in").click()
+        dialog.get_by_role("button", name="Sign in", exact=True).click()
         expect(page.locator(".bk-authbar")).to_contain_text("carol")
 
         # --- 3. reply in place ------------------------------------------------
@@ -89,6 +89,21 @@ def main() -> int:
         reviews = state["reviews"].get("1", [])
         assert any(r["state"] == "REQUEST_CHANGES" and r["user"]["login"] == "carol"
                    for r in reviews), f"review not stored on the forge: {reviews}"
+
+        # --- 5. one-click sign-in via the mocked ORCID chain ------------------
+        # (site → forge OAuth2+PKCE → persona picker standing in for ORCID)
+        page.locator(".bk-authbar").get_by_text("sign out").click()
+        expect(page.locator(".bk-authbar")).to_contain_text("sign in to contribute")
+        page.locator(".bk-authbar .bk-authlink").click()
+        page.locator(".bk-modal").get_by_role(
+            "button", name="Sign in with ORCID (demo)").click()
+        expect(page.get_by_role("heading", name="Sign in (demo)")).to_be_visible()
+        page.get_by_text("Josiah Carberry").click()
+        # redirected back to the site root; the PKCE code exchange completes
+        # and the persona's ORCID iD is the signed-in username
+        expect(page.locator(".bk-authbar")).to_contain_text("0000-0002-1825-0097")
+        page.goto(f"{SITE}/diffs/pr-1/")
+        expect(page.locator(".bk-authbar")).to_contain_text("0000-0002-1825-0097")
 
         if errors:
             print("page errors:", errors, file=sys.stderr)

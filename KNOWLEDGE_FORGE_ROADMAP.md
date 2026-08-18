@@ -69,6 +69,7 @@ Delivered by the MVP plus the iterations since (do not rebuild):
 | **Tests** | `tests/smoke.sh` (local), `tests/remote_roundtrip.sh` (CLI round trip incl. discussion against the stub forge), ✅ new `tests/web_e2e.sh` + `web_discussion_test.py` (headless Chromium: read thread anonymously, sign in, reply in place, request changes — verified against the stub forge's state) |
 | **Self-host infra** | docker-compose (Forgejo + runner + nginx) with CORS for the site origin; `bootstrap.sh` provisions the admin, branch protection, CI secrets, and the public OAuth2 (PKCE) app |
 | **Identity** | ✅ new: ORCID-only sign-in wired at the infra level — compose config (external-registration-only, password form off, username = ORCID iD) + `bootstrap.sh` registers the ORCID OIDC source; site button labeled via `book.toml [oauth] label` |
+| **Demo server** | ✅ new: `./demo.sh` runs the full experience on localhost with the auth workflow mocked — the stub forge serves the real OAuth2+PKCE endpoints with a fictional-persona picker in ORCID's place, implements the contents/branches/issues APIs (so web edit/vouch/discuss work), renders read-only HTML thread views, and a mock CI loop produces diff pages and rebuilds on merge; the browser e2e also covers the mocked sign-in chain |
 
 ## 3. What "feature complete" means
 
