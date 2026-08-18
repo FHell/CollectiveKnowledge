@@ -24,7 +24,8 @@ in-browser client are both thin layers over git + the Forgejo REST API.
 | `site/` | landing page + `build_site.sh`, the site assembly used by CI |
 | `.forgejo/workflows/` | CI: per-PR rendered diff pages + full site deploy |
 | `infra/` | docker-compose (Forgejo + Actions runner + nginx), bootstrap script — this is the deployment |
-| `tests/` | `smoke.sh` (local), `remote_roundtrip.sh` (CLI round trip vs a stub forge), `web_e2e.sh` (headless-browser round trip: read thread, sign in, reply, request changes) |
+| `demo.sh` | one-command debug/demo server: site + stub forge + mocked ORCID sign-in + mock CI |
+| `tests/` | `smoke.sh` (local), `remote_roundtrip.sh` (CLI round trip vs a stub forge), `web_e2e.sh` (headless-browser round trip: read thread, sign in — pasted token *and* mocked ORCID chain — reply, request changes) |
 | `STUDENT_GUIDE.md` | one page: from nothing to a submitted change |
 | `INSTRUCTOR_GUIDE.md` | reviewing from the CLI or the browser |
 | `MVP_BUILD_PLAN.md` | the original MVP plan |
@@ -50,6 +51,23 @@ application token also works (e.g. for the CLI). Signed in:
   survives.
 
 Git remains the database; CI re-renders what you see after every merge.
+
+## Demo server (mocked auth, no Docker, no ORCID)
+
+```sh
+pip install -e .
+./demo.sh            # site on http://127.0.0.1:8000, forge stub on :8001
+```
+
+One command runs the whole experience on localhost: this repo as the
+demo book, a seeded change under review with a discussion and a
+request-changes verdict, and the **auth workflow mocked** — the site's
+real OAuth2+PKCE flow runs against the stub forge, whose ORCID step is
+a picker of fictional personas (Josiah Carberry & friends); the chosen
+persona's ORCID iD becomes your username, exactly as in production. A
+mock CI loop renders diff pages for new changes within ~3 s and
+rebuilds the book on merge. Everything is a temp dir; Ctrl-C tears it
+down.
 
 ## Quick start (local, no server)
 

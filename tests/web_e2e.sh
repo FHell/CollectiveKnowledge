@@ -68,12 +68,21 @@ write_local_config(Path("checkout"), {
     "forgejo": {"url": "$API", "owner": "class", "repo": "notes"},
 })
 EOF
+# enable the one-click sign-in path (mock ORCID persona picker on the stub)
+cat >> checkout/book.toml <<'EOF'
+
+[oauth]
+client_id = "demo"
+label = "Sign in with ORCID (demo)"
+EOF
 (
   cd checkout
   book build -o "$WORK/site/book" >/dev/null
   for f in style.css forge-client.js web-actions.js forge.json; do
     cp "$WORK/site/book/$f" "$WORK/site/$f"
   done
+  # a root page for the OAuth redirect to land on (as in the real site)
+  cp "$HERE/../site/landing.html" "$WORK/site/index.html"
   [ -f "$WORK/site/forge.json" ] || fail "book build wrote no forge.json"
 
   # rendered diff page for change #1, exactly as CI produces it
