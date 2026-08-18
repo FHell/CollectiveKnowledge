@@ -31,10 +31,18 @@ What this buys:
   service: sign-in is a public OAuth2 + PKCE app on our own forge (or a
   pasted token), so the last piece of "our own server-side code" (the
   Cloudflare worker) is deleted.
-- **Everyone who matters has an account.** Contributors are provisioned
-  on the instance (bootstrap or invite), so the whole fork-based
-  contribution machinery a third-party forge would force is unnecessary:
-  students push `username/*` branches to the one repository.
+- **Everyone who matters has an account.** Contributors self-register by
+  signing in, so the whole fork-based contribution machinery a
+  third-party forge would force is unnecessary: participants push
+  `username/*` branches to the one repository.
+- **ORCID is the account service** — and the only way in. Forgejo
+  consumes ORCID as an OpenID Connect authentication source; the first
+  ORCID sign-in auto-creates the forge account with the **ORCID iD as
+  the username**, password/form login stays off, and the site's sign-in
+  chain is site → forge (OAuth2+PKCE) → ORCID. Contributions,
+  discussions and vouches thereby carry verifiable scholarly identity,
+  with zero identity code in this repo — it is Forgejo configuration
+  (`infra/`).
 
 Standing principles, unchanged: the published site is **static** (nginx),
 the browser client and the CLI are both thin layers over git + the
@@ -59,7 +67,8 @@ Delivered by the MVP plus the iterations since (do not rebuild):
 | **Discussions on proposed edits** | ✅ new: every diff page shows the change's full discussion below the rendered diff — opening post, comments, review verdicts as badges — readable anonymously, replyable in place when signed in; request-changes/approve/merge refresh the thread |
 | **CI security invariant** | ✅ new: both workflows build tool + site from `main` only; PR content is read as data (`git show`), never installed or executed |
 | **Tests** | `tests/smoke.sh` (local), `tests/remote_roundtrip.sh` (CLI round trip incl. discussion against the stub forge), ✅ new `tests/web_e2e.sh` + `web_discussion_test.py` (headless Chromium: read thread anonymously, sign in, reply in place, request changes — verified against the stub forge's state) |
-| **Self-host infra** | docker-compose (Forgejo + runner + nginx) with CORS for the site origin; `bootstrap.sh` provisions accounts, branch protection, CI secrets, and the public OAuth2 (PKCE) app |
+| **Self-host infra** | docker-compose (Forgejo + runner + nginx) with CORS for the site origin; `bootstrap.sh` provisions the admin, branch protection, CI secrets, and the public OAuth2 (PKCE) app |
+| **Identity** | ✅ new: ORCID-only sign-in wired at the infra level — compose config (external-registration-only, password form off, username = ORCID iD) + `bootstrap.sh` registers the ORCID OIDC source; site button labeled via `book.toml [oauth] label` |
 
 ## 3. What "feature complete" means
 
@@ -106,27 +115,35 @@ Delivered by the MVP plus the iterations since (do not rebuild):
 Each phase is independently shippable. Suggested order: A → D → B → C →
 E → F (accounts first — nothing else matters if people can't get in).
 
-### Phase A — Accounts, onboarding & identity (~2 days)
+### Phase A — Prove the ORCID chain end to end (~2 days)
 
-The bootstrap provisions a fixed student list; a real course (or an open
-book) needs more flexible entry.
+The decision is made and the configuration is in place (compose +
+bootstrap); what remains is verifying it against real services and
+smoothing the first-contact experience.
 
-1. **Invite flow.** Either open registration with an allowlisted email
-   domain, or admin-generated invite links (Forgejo supports both via
-   config/API) — pick per deployment, document both in `infra/README.md`.
-   The published site's sign-in dialog links to "get an account".
-2. **Sign-in polish.** Verify the PKCE flow against a real Forgejo over
-   HTTPS (WebCrypto needs a secure context); ensure the OAuth2 token
-   refresh path works or degrade to re-auth; scope tokens minimally.
-3. **External identity via the forge, not via us.** ORCID / university
-   SSO = an OpenID Connect authentication source configured *in Forgejo*
-   (Site administration → Authentication sources). No code in this repo;
-   document the recipe. Vouch records can then carry the forge account's
-   verified external identity (Phase C).
+1. **Live verification.** Rehearse the full chain against a real
+   Forgejo over HTTPS with the **ORCID sandbox**
+   (`ORCID_DISCOVERY_URL`): sign-in → auto-registration → username is
+   the ORCID iD → first-login email/username confirmation → application
+   token generation → CLI clone/submit. Fix whatever the rehearsal
+   surfaces (claim mapping, redirect URIs, cookie/SameSite issues).
+2. **Sign-in polish on the site.** Verify the PKCE flow (WebCrypto needs
+   a secure context); when Forgejo has exactly one auth source and no
+   password form, confirm the forge login page effectively forwards to
+   ORCID so the user experiences one hop; handle token expiry by
+   degrading to re-auth cleanly.
+3. **First-contact UX.** The site's sign-in dialog explains "your ORCID
+   iD is your account" and links to ORCID registration for people
+   without one; display names: prefer the ORCID-supplied full name over
+   the raw iD in overlays and threads where available (`people.json`
+   groundwork for Phase C).
+4. **Admin story.** Document + rehearse ORCID-linking the bootstrap
+   admin account (see `infra/README.md`) so no password sign-in remains
+   in day-to-day use.
 
-**Acceptance:** a person with no account reaches the book, follows
-"get an account", signs in on the site, and proposes an edit — no
-instructor involvement beyond the initial deployment choice.
+**Acceptance:** a person with only an ORCID iD (sandbox) goes from
+never-seen-the-site to a submitted, discussed change — browser and CLI —
+with no instructor involvement and no password anywhere.
 
 ### Phase B — Editing & review UX (~3 days)
 
@@ -153,19 +170,25 @@ clobbering.
 
 ### Phase C — Validation at scale: roles, staleness, coverage (~2–3 days)
 
-1. **Roles in git.** `meta/people.yaml`: login → {name, role:
-   maintainer|validator|contributor, orcid}. Committed and PR-reviewed
-   like everything else; baked into `people.json` by `book build`.
-2. **Vouch display by role.** Overlay and chapter margin distinguish
+1. **Roles in git.** `meta/people.yaml`: login (= ORCID iD) → {name,
+   role: maintainer|validator|contributor}. Committed and PR-reviewed
+   like everything else; baked into `people.json` by `book build` —
+   also the map from raw ORCID iDs to display names everywhere on the
+   site.
+2. **One identity per vouch.** Web vouches record the forge login
+   (ORCID iD); CLI vouches currently record git `user.name` — align the
+   CLI on the configured forge username so both writers produce
+   ORCID-keyed records.
+3. **Vouch display by role.** Overlay and chapter margin distinguish
    validator/maintainer vouches from reader vouches.
-3. **Staleness.** Vouches are hash-keyed, so an edited paragraph silently
+4. **Staleness.** Vouches are hash-keyed, so an edited paragraph silently
    orphans its vouches today. `book build` matches orphaned vouches to
    their nearest current paragraph (reuse the diff module's matcher
    against the vouch's recorded commit) and surfaces "edited since N
    vouched (date)"; `book vouches --stale` lists the same.
-4. **Re-vouch nudges** after merges that stale existing vouches (CLI
+5. **Re-vouch nudges** after merges that stale existing vouches (CLI
    prompt on `approve --vouch`; list on the diff page after merge).
-5. **Coverage.** Chapter TOC and header show validation coverage
+6. **Coverage.** Chapter TOC and header show validation coverage
    (x/y paragraphs vouched by a validator), baked into `coverage.json`.
 
 **Acceptance:** editing a vouched paragraph flips it to "stale" on the
@@ -259,6 +282,8 @@ full test suite green.
 
 | Risk | Mitigation / decision needed |
 |---|---|
+| ORCID outage ⇒ nobody can sign in | Reading is unaffected (static site); existing sessions and application tokens keep working — tokens are the write-path fallback; document in the ops runbook |
+| ORCID OIDC provides no email claim | Forgejo's one-time completion form on first login (rehearsed in Phase A); acceptable friction |
 | PKCE token endpoint CORS varies across Forgejo versions | `[cors]` enabled in compose; pasted token is the always-works fallback; verify per release in Phase A |
 | Self-hosted forge down ⇒ interactive layer dark | Site stays readable (static); Phase F bakes snapshots for the landing list; ops runbook |
 | We now own discussion durability | Phase F backup/restore of the Forgejo volume is non-optional |
@@ -272,9 +297,10 @@ full test suite green.
 1. **Anonymous phone visitor** reads a chapter, taps a paragraph (author,
    vouches, discussion), opens a change's diff page and reads the whole
    debate under it — no login anywhere.
-2. **New participant** follows "get an account", signs in on the site,
-   fixes a typo via the paragraph editor — the change appears on the
-   landing list with a rendered diff.
+2. **New participant** clicks "Sign in with ORCID" — their ORCID iD is
+   their account, created on the spot — and fixes a typo via the
+   paragraph editor; the change appears on the landing list with a
+   rendered diff, attributed to their ORCID iD.
 3. **Another participant** disagrees with a wording choice **on the diff
    page**, replies in place; the author revises from the same page; the
    thread shows the whole exchange next to the always-current diff.

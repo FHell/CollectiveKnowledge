@@ -1,27 +1,36 @@
 # Student guide
 
+Your **ORCID iD is your account** — there is nothing else to register.
 You write; the tool handles git. Five commands total — or no commands
-at all: on the published book site you can sign in with your token
+at all: on the published book site, **Sign in with ORCID**
 (bottom-right), tap any paragraph, and use ✏️ **edit** to propose a
-change straight from the browser. It becomes a pull request exactly as
-if you had used the CLI below.
+change straight from the browser. It becomes a change under review
+exactly as if you had used the CLI below.
 
 ## Setup (once)
 
-1. Install the tool (Python 3.10+; on Windows use WSL):
+1. **Sign in with ORCID** — on the published site or the course forge
+   (link from your instructor). No ORCID iD yet? Get one free at
+   https://orcid.org/register. Your first sign-in creates your forge
+   account (username = your ORCID iD) and asks once for an email
+   address.
+
+2. For the CLI, install the tool (Python 3.10+; on Windows use WSL):
 
    ```sh
    pipx install book-cli   # or: pip install book-cli
    ```
 
-2. Clone the course book (URL and your token come from your instructor):
+3. Generate a token for the CLI: on the forge, *Settings →
+   Applications → Generate token* (repository + issue read/write).
+   Then clone and configure:
 
    ```sh
    book clone https://git.example.org/course/book.git
    cd book
    ```
 
-   It will ask for your username. Then put your API token in
+   It will ask for your username (your ORCID iD). Put the token in
    `~/.config/book/config.toml` so submitting works:
 
    ```toml

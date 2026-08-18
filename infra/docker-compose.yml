@@ -18,7 +18,17 @@ services:
       - FORGEJO__server__ROOT_URL=${FORGEJO_ROOT_URL:-http://localhost:3000/}
       - FORGEJO__server__DOMAIN=${FORGEJO_DOMAIN:-localhost}
       - FORGEJO__actions__ENABLED=true
-      - FORGEJO__service__DISABLE_REGISTRATION=true  # accounts via bootstrap.sh
+      # ORCID is the account service (see infra/README.md): signing in
+      # with ORCID auto-creates the forge account (username = ORCID iD);
+      # form registration stays off, and password sign-in is disabled by
+      # default — set FORGEJO_PASSWORD_SIGNIN=true only for local testing
+      # without an ORCID client (e.g. the bootstrap smoke run).
+      - FORGEJO__service__DISABLE_REGISTRATION=false
+      - FORGEJO__service__ALLOW_ONLY_EXTERNAL_REGISTRATION=true
+      - FORGEJO__service__ENABLE_PASSWORD_SIGNIN_FORM=${FORGEJO_PASSWORD_SIGNIN:-false}
+      - FORGEJO__oauth2_client__ENABLE_AUTO_REGISTRATION=true
+      - FORGEJO__oauth2_client__USERNAME=userid   # username = ORCID iD
+      - FORGEJO__oauth2_client__ACCOUNT_LINKING=auto
       - FORGEJO__repository__DEFAULT_BRANCH=main
       # the published site (nginx origin) talks to the forge API and the
       # OAuth token endpoint directly from the browser — allow it

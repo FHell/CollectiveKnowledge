@@ -46,13 +46,14 @@ regenerate about a minute after a change is opened or updated.</p>
 
 <h2>How it works</h2>
 <p class="note">The site is static files; the self-hosted forge behind
-it is the backend. The browser talks directly to the forge API — your
-token or sign-in is stored only in this browser — git is the database,
-and CI re-renders what you see. Discussions, accounts and changes all
-live on the course's own infrastructure; nothing is stored on a
-third-party service. The CLI (<code>pipx install book-cli</code>)
-offers the same workflow from a terminal, offline reviewing included —
-see the guides in the repository.</p>
+it is the backend. <strong>Your ORCID iD is your account</strong> —
+sign in with ORCID and you can contribute; there is nothing else to
+register. The browser talks directly to the forge API — your sign-in is
+stored only in this browser — git is the database, and CI re-renders
+what you see. Discussions, accounts and changes all live on the
+course's own infrastructure; nothing is stored on a third-party
+service. The CLI (<code>pipx install book-cli</code>) offers the same
+workflow from a terminal — see the guides in the repository.</p>
 
 <script src="forge-client.js"></script>
 <script src="web-actions.js" data-base="./"></script>

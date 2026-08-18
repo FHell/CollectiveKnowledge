@@ -215,13 +215,17 @@ def forge_site_config(root: Path) -> dict | None:
         "html": f"{base}/{owner}/{name}",
     }
     # optional one-click OAuth sign-in: a *public* (PKCE, no secret)
-    # OAuth2 app registered on the Forgejo instance — book.toml [oauth]
+    # OAuth2 app registered on the Forgejo instance — book.toml [oauth].
+    # `label` names the upstream identity on the button (e.g. "Sign in
+    # with ORCID" when the forge authenticates via ORCID).
     import tomllib
 
     try:
         oauth = tomllib.loads((root / "book.toml").read_text()).get("oauth", {})
         if oauth.get("client_id"):
             cfg["oauth"] = {"client_id": oauth["client_id"]}
+            if oauth.get("label"):
+                cfg["oauth"]["label"] = oauth["label"]
     except FileNotFoundError:
         pass
     return cfg

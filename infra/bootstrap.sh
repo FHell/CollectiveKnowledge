@@ -3,10 +3,16 @@
 #
 #   ./bootstrap.sh <instructor> <org> <repo> [student ...]
 #
-# Creates: instructor admin account, org + repo, branch protection on main
-# (PRs only; instructor may push), one account + token per student, a CI
-# token + the repo secrets/vars the workflows need, and a runner
-# registration token.
+# Creates: instructor admin account, the ORCID authentication source
+# (when ORCID_CLIENT_ID / ORCID_CLIENT_SECRET are set — ORCID is the
+# account service; participants self-register by signing in with their
+# ORCID iD), org + repo, branch protection on main (PRs only; instructor
+# may push), a CI token + the repo secrets/vars the workflows need, the
+# site's public OAuth2 (PKCE) app, and a runner registration token.
+#
+# The optional [student ...] arguments pre-create local password
+# accounts — only useful for testing without an ORCID client, together
+# with FORGEJO_PASSWORD_SIGNIN=true on docker compose.
 #
 # Requires: docker compose services up (`docker compose up -d`), curl, jq.
 set -euo pipefail
@@ -50,6 +56,27 @@ echo "==> Creating admin API token"
 ADMIN_TOKEN=$("${FORGEJO_EXEC[@]}" admin user generate-access-token \
   --username "$INSTRUCTOR" --token-name "bootstrap-$(date +%s)" \
   --scopes all --raw | tr -d '[:space:]')
+
+echo "==> ORCID authentication source (the account service)"
+if [ -n "${ORCID_CLIENT_ID:-}" ] && [ -n "${ORCID_CLIENT_SECRET:-}" ]; then
+  "${FORGEJO_EXEC[@]}" admin auth add-oauth \
+    --name orcid \
+    --provider openidConnect \
+    --key "$ORCID_CLIENT_ID" \
+    --secret "$ORCID_CLIENT_SECRET" \
+    --auto-discover-url "${ORCID_DISCOVERY_URL:-https://orcid.org/.well-known/openid-configuration}" \
+    --scopes openid \
+    && echo "    ORCID sign-in enabled — usernames will be ORCID iDs" \
+    || echo "    (could not add — source may already exist; check 'forgejo admin auth list')"
+else
+  echo "    ORCID_CLIENT_ID / ORCID_CLIENT_SECRET not set — SKIPPED."
+  echo "    Register a public API client at https://orcid.org/developer-tools"
+  echo "    with redirect URI:"
+  echo "        ${FORGEJO_ROOT_URL:-$FORGEJO_URL}/user/oauth2/orcid/callback"
+  echo "    then re-run bootstrap with those variables exported (idempotent),"
+  echo "    or add the source by hand. Until then only password sign-in works"
+  echo "    (needs FORGEJO_PASSWORD_SIGNIN=true on docker compose)."
+fi
 
 echo "==> Creating org $ORG and repo $ORG/$REPO"
 api POST /orgs "{\"username\": \"$ORG\"}" >/dev/null 2>&1 || echo "    (org exists)"
@@ -100,6 +127,7 @@ CREDS_FILE=credentials.txt
   echo "instructor: $INSTRUCTOR / $INSTRUCTOR_PW"
 } > "$CREDS_FILE"
 
+[ ${#STUDENTS[@]} -gt 0 ] && echo "==> Pre-creating password accounts (testing fallback — real participants sign in with ORCID)"
 for STUDENT in "${STUDENTS[@]}"; do
   echo "==> Creating student account: $STUDENT"
   SPW=$(pw)
