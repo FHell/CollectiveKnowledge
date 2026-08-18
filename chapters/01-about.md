@@ -18,7 +18,7 @@ been checked. If the paragraph changes later, the vouch goes stale
 automatically — it is keyed to the content itself, not to a page or a
 position.
 
-Try it: sign in with a GitHub token (bottom-right corner), then vouch
-for this paragraph, start a discussion about it, or propose a better
-wording. Your action becomes an issue, a commit, or a pull request in
-the repository — nothing is stored anywhere else.
+Try it: sign in (bottom-right corner), then vouch for this paragraph,
+start a discussion about it, or propose a better wording. Your action
+becomes a discussion, a commit, or a change under review on this
+course's own forge — nothing is stored anywhere else.

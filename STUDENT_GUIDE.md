@@ -47,6 +47,17 @@ typeset — it appears about a minute after you submit).
 That's it. If the instructor asks for revisions, edit again, then
 `book save` and `book submit` — the same change updates.
 
+## Discussing your change
+
+The conversation about a change lives with the change — readable by
+everyone on its diff page, answerable there when signed in, and equally
+from the CLI:
+
+```sh
+book comments 1                      # read the discussion on change #1
+book comment 1 -m "Good point — fixed in the new version."
+```
+
 ## Useful extras
 
 ```sh

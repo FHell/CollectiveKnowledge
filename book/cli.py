@@ -196,6 +196,26 @@ def review(number: int, no_open: bool) -> None:
     do_review(_root(), number, open_browser=not no_open)
 
 
+@main.command()
+@click.argument("number", type=int)
+def comments(number: int) -> None:
+    """Show the discussion on a change (opening post, comments, reviews)."""
+    from .remote import print_thread, thread
+
+    pr, items = thread(_root(), number)
+    print_thread(pr, items)
+
+
+@main.command()
+@click.argument("number", type=int)
+@click.option("-m", "--message", required=True, help="Your reply.")
+def comment(number: int, message: str) -> None:
+    """Reply in the discussion on a change."""
+    from .remote import comment as do_comment
+
+    do_comment(_root(), number, message)
+
+
 @main.command("push-review")
 @click.argument("number", type=int)
 def push_review_cmd(number: int) -> None:

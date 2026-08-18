@@ -10,13 +10,19 @@ book changes                 # list open changes (number, author, title)
 book review 12               # fetch change #12, open its rendered diff
 ```
 
-`book review` checks out the change locally (branch `review/pr-12`) and
-opens the rendered AST diff against `main` — insertions green, deletions
-red, changed math symbols highlighted inside the typeset formula.
+`book review` first prints the change's discussion (opening post,
+comments, review verdicts), then checks out the change locally (branch
+`review/pr-12`) and opens the rendered AST diff against `main` —
+insertions green, deletions red, changed math symbols highlighted inside
+the typeset formula.
 
 Then one of:
 
 ```sh
+# join the discussion:
+book comments 12             # (re-)read the thread
+book comment 12 -m "nice catch — one question about step 2"
+
 # ask for revisions:
 book request-changes 12 -m "the second step skips a sign flip"
 
@@ -44,8 +50,10 @@ your token (bottom-right corner):
 
 - the landing page lists **changes under review**, each linking to its
   rendered diff;
-- every diff page has a review bar: **approve**, **request changes**,
-  **merge** (merge commit — authorship preserved);
+- every diff page shows the change's **discussion thread** below the
+  diff — read it anonymously, reply in place when signed in — and a
+  review bar: **approve**, **request changes**, **merge** (merge commit
+  — authorship preserved);
 - on book pages, tap a paragraph to **vouch** (committed directly to
   `main` with your token) or **discuss**.
 

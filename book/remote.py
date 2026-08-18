@@ -112,9 +112,71 @@ def print_changes(prs: list[dict]) -> None:
         )
 
 
+# --- discussion (the PR thread, hosted on our own forge) -------------------
+
+_STATE_LABEL = {
+    "APPROVED": "approved",
+    "REQUEST_CHANGES": "requested changes",
+    "COMMENT": "commented",
+}
+
+
+def thread(root: Path, number: int) -> tuple[dict, list[dict]]:
+    """(pr, timeline) — opening post, comments and reviews, oldest first."""
+    forge = Forge.for_repo(root)
+    pr = forge.get_pr(number)
+    items = [{
+        "author": (pr.get("user") or {}).get("login", "?"),
+        "date": pr.get("created_at") or "",
+        "badge": "opened this change",
+        "body": pr.get("body") or "",
+    }]
+    for c in forge.list_comments(number):
+        items.append({
+            "author": (c.get("user") or {}).get("login", "?"),
+            "date": c.get("created_at") or "",
+            "badge": "",
+            "body": c.get("body") or "",
+        })
+    try:
+        for r in forge.list_reviews(number):
+            state = r.get("state") or ""
+            items.append({
+                "author": (r.get("user") or {}).get("login", "?"),
+                "date": r.get("submitted_at") or "",
+                "badge": _STATE_LABEL.get(state, state.lower()),
+                "body": r.get("body") or "",
+            })
+    except ForgeError:
+        pass  # older forges without the reviews listing endpoint
+    items.sort(key=lambda i: i["date"])
+    return pr, items
+
+
+def print_thread(pr: dict, items: list[dict]) -> None:
+    print(f"#{pr['number']} {pr.get('title', '')}  [{pr.get('state', '')}]")
+    for i in items:
+        badge = f" ({i['badge']})" if i["badge"] else ""
+        print(f"\n  {i['author']}{badge}  {i['date'][:16].replace('T', ' ')}")
+        for line in (i["body"] or "").splitlines():
+            print(f"    {line}")
+
+
+def comment(root: Path, number: int, message: str) -> None:
+    forge = Forge.for_repo(root)
+    forge.post_comment(number, message)
+    _say(f"Comment posted on change #{number}.")
+
+
 # --- review --------------------------------------------------------------
 
 def review(root: Path, number: int, open_browser: bool = True) -> Path:
+    try:
+        pr, items = thread(root, number)
+        print_thread(pr, items)
+        print()
+    except ForgeError:
+        pass  # forge unreachable: the local part of review still works
     branch = f"review/pr-{number}"
     git("fetch", "origin", "main", cwd=root)
     try:

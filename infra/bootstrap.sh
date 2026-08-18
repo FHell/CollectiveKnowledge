@@ -76,6 +76,21 @@ api PUT "/repos/$ORG/$REPO/actions/secrets/CI_TOKEN" "{\"data\": \"$CI_TOKEN\"}"
 api POST "/repos/$ORG/$REPO/actions/variables/SITE_URL" "{\"value\": \"$SITE_URL\"}" >/dev/null 2>&1 \
   || api PUT "/repos/$ORG/$REPO/actions/variables/SITE_URL" "{\"value\": \"$SITE_URL\"}" >/dev/null
 
+echo "==> Registering the site's OAuth2 app (public client, PKCE — no secret)"
+OAUTH_CLIENT_ID=$(api POST /user/applications/oauth2 "{
+  \"name\": \"book-site\",
+  \"redirect_uris\": [\"$SITE_URL/\", \"$SITE_URL/book/\"],
+  \"confidential_client\": false
+}" | jq -r .client_id) || OAUTH_CLIENT_ID=""
+if [ -n "$OAUTH_CLIENT_ID" ]; then
+  echo "    client_id: $OAUTH_CLIENT_ID"
+  echo "    -> put this in book.toml on main to enable one-click sign-in:"
+  echo "         [oauth]"
+  echo "         client_id = \"$OAUTH_CLIENT_ID\""
+else
+  echo "    (skipped — pasted tokens keep working without it)"
+fi
+
 echo "==> Runner registration token (register with infra/README.md step 3):"
 "${FORGEJO_EXEC[@]}" actions generate-runner-token || true
 

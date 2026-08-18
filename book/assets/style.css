@@ -119,3 +119,33 @@ h1, h2, h3 { font-family: system-ui, sans-serif; line-height: 1.25; }
 .bk-change a { color: #1c4b82; text-decoration: none; }
 .bk-change a:hover { text-decoration: underline; }
 .bk-change-meta { color: #777; font-size: 0.82rem; }
+
+/* --- discussion thread (rendered-diff pages) --- */
+.bk-thread {
+  max-width: 46rem; margin: 3rem auto 5rem; padding: 0 1rem;
+  font-family: system-ui, sans-serif;
+}
+.bk-thread-title {
+  font-size: 1.05rem; border-top: 1px solid #ddd; padding-top: 1.2rem;
+}
+.bk-thread-list { display: flex; flex-direction: column; gap: 0.6rem; }
+.bk-comment {
+  border: 1px solid #ddd; border-radius: 8px; background: #fff;
+  padding: 0.55rem 0.8rem;
+}
+.bk-comment-head {
+  font-size: 0.82rem; color: #333;
+  display: flex; gap: 0.5rem; align-items: baseline; flex-wrap: wrap;
+}
+.bk-comment-date { color: #999; font-size: 0.75rem; }
+.bk-badge {
+  font-size: 0.72rem; border-radius: 999px; padding: 0.05rem 0.5rem;
+  background: #eee; color: #555;
+}
+.bk-badge-ok { background: #e2f2e4; color: #14520f; }
+.bk-badge-warn { background: #fbeaea; color: #8f1d1d; }
+.bk-comment-body {
+  margin-top: 0.35rem; font-size: 0.9rem; color: #1a1a1a;
+  white-space: pre-wrap; overflow-wrap: anywhere;
+}
+.bk-thread-replyrow { display: flex; justify-content: flex-end; margin-top: 0.5rem; }

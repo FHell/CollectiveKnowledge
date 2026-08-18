@@ -45,7 +45,8 @@ from book.config import write_local_config
 d, user, api = sys.argv[1:]
 write_local_config(Path(d), {
     "user": {"name": user},
-    "forgejo": {"url": api, "owner": "class", "repo": "notes"},
+    # stub auth convention: the token IS the username
+    "forgejo": {"url": api, "owner": "class", "repo": "notes", "token": user},
 })
 EOF
   git -C "$1" config user.name "$2"
@@ -67,6 +68,7 @@ EOF
   book save -m "add example about Euler's identity" >/dev/null
   book submit >/dev/null
   book submit >/dev/null   # idempotency: second submit must not create PR #2
+  book comment 1 -m "I double-checked the sign convention." >/dev/null
 )
 PR_COUNT=$(curl -fsS "$API/api/v1/repos/class/notes/pulls?state=open" | python3 -c "import json,sys; print(len(json.load(sys.stdin)))")
 [ "$PR_COUNT" = "1" ] && echo "ok: submit idempotent (1 open PR)" || fail "expected 1 open PR, got $PR_COUNT"
@@ -77,7 +79,15 @@ configure instructor frank
 (
   cd instructor
   book changes | grep -q "alice" || fail "book changes does not list alice's PR"
-  book review 1 --no-open >/dev/null
+
+  # the discussion on the change is readable and answerable from the CLI
+  book comments 1 | grep -q "alice (opened this change)" || fail "thread misses opening post"
+  book comments 1 | grep -q "double-checked the sign convention" || fail "thread misses alice's comment"
+  book comment 1 -m "Thanks — reviewing now." >/dev/null
+
+  REVIEW_OUT=$(book review 1 --no-open)
+  echo "$REVIEW_OUT" | grep -q "double-checked the sign convention" \
+    || fail "book review does not print the discussion"
   git rev-parse --abbrev-ref HEAD | grep -q "review/pr-1" || fail "review did not check out review/pr-1"
   grep -q "<ins" _build/diff-pr-1.html || fail "review diff missing <ins>"
 
@@ -90,6 +100,7 @@ EOF
   book save -m "wording tweak" >/dev/null
   book push-review 1 >/dev/null
   book request-changes 1 -m "please double-check the sign" >/dev/null
+  book comments 1 | grep -q "frank (requested changes)" || fail "review missing from thread"
   book approve 1 --vouch --note "checked derivation" >/dev/null
 )
 

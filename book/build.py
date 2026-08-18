@@ -199,30 +199,29 @@ def forge_site_config(root: Path) -> dict | None:
         return None
     from urllib.parse import urlparse
 
-    host = urlparse(base).netloc
-    if host == "github.com":
-        provider, api = "github", "https://api.github.com"
-    else:
-        provider, api = "gitea", f"{base.rstrip('/')}/api/v1"
+    if urlparse(base).netloc == "github.com":
+        # The backend is a self-hosted Forgejo. A github.com origin means
+        # this checkout is development hosting, not a deployment — build a
+        # read-only site (the interactive layer disables itself).
+        return None
+    base = base.rstrip("/")
     cfg = {
-        "provider": provider,
-        "api": api,
+        "provider": "forgejo",
+        "base": base,
+        "api": f"{base}/api/v1",
         "owner": owner,
         "repo": name,
         "branch": "main",
-        "html": f"{base.rstrip('/')}/{owner}/{name}",
+        "html": f"{base}/{owner}/{name}",
     }
-    # optional OAuth sign-in (book.toml [oauth]): client_id + the
-    # token-exchange worker URL (see worker/README.md)
+    # optional one-click OAuth sign-in: a *public* (PKCE, no secret)
+    # OAuth2 app registered on the Forgejo instance — book.toml [oauth]
     import tomllib
 
     try:
         oauth = tomllib.loads((root / "book.toml").read_text()).get("oauth", {})
-        if oauth.get("client_id") and oauth.get("exchange_url"):
-            cfg["oauth"] = {
-                "client_id": oauth["client_id"],
-                "exchange_url": oauth["exchange_url"],
-            }
+        if oauth.get("client_id"):
+            cfg["oauth"] = {"client_id": oauth["client_id"]}
     except FileNotFoundError:
         pass
     return cfg

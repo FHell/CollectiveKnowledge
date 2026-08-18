@@ -1,17 +1,26 @@
 # Infrastructure
 
-One host, three containers (see `docker-compose.yml`):
+One host, three containers (see `docker-compose.yml`). The self-hosted
+Forgejo is **the** backend of the whole system: it hosts the repository,
+the accounts, the changes (PRs) and every discussion on them — nothing
+lives on a third-party service.
 
 | Service | Role | Port |
 |---|---|---|
-| forgejo | repo hosting, users, PRs, Actions | 3000 (HTTP), 2222 (SSH) |
+| forgejo | the backend: repos, users, changes, discussions, Actions | 3000 (HTTP), 2222 (SSH) |
 | runner  | executes `.forgejo/workflows/` | — |
-| nginx   | serves built book at `/`, diffs at `/diffs/` | 8080 |
+| nginx   | serves the published site (landing `/`, book `/book/`, diffs `/diffs/pr-N/`) | 8080 |
 
 The only glue between CI and the web server is the shared `book-site`
-volume: the deploy workflow writes the built site to `/site/book`, the PR
-workflow writes rendered diffs to `/site/diffs/pr-<n>/`, and nginx serves
-both read-only.
+volume: the deploy workflow writes the whole site to `/site/current`
+(atomic swap), the PR workflow refreshes single diff pages under
+`/site/current/diffs/pr-<n>/`, and nginx serves it read-only.
+
+The published site's browser client talks straight to the Forgejo API
+(reading discussions works anonymously; writing needs a sign-in). Since
+site and forge are different origins, `docker-compose.yml` enables
+Forgejo's `[cors]`; set `SITE_ORIGIN=https://book.example.org` in the
+compose environment to lock it down to the site's origin (default `*`).
 
 ## Setup
 
@@ -34,8 +43,11 @@ both read-only.
    Creates the instructor admin (`frank`), org `course`, repo
    `course/book`, protects `main` (PRs only; instructor may push — do NOT
    restrict branch creation, students need `<username>/*`), one account +
-   API token per student, and the `CI_TOKEN` secret / `SITE_URL` variable
-   the workflows use. Credentials land in `credentials.txt`.
+   API token per student, the `CI_TOKEN` secret / `SITE_URL` variable the
+   workflows use, and a **public OAuth2 app** (PKCE, no secret) for
+   one-click sign-in on the published site — put the printed `client_id`
+   into `book.toml` under `[oauth]`. Credentials land in
+   `credentials.txt`.
 
 3. **Register the runner** with the token printed by bootstrap:
 
@@ -68,11 +80,16 @@ the single-host fallback (book on 8080, Forgejo on 3000). The built site
 and diff pages use only relative asset paths, so they work under any
 prefix either way.
 
-## Acceptance checklist (Phase 1)
+## Acceptance checklist
 
 - [ ] student can clone over HTTPS with token
 - [ ] student `git push origin main` is rejected
 - [ ] student can push `username/*` branches
 - [ ] opening a PR triggers the `pr-diff` workflow; the diff link appears
       as a PR comment within ~1 min
-- [ ] merging a PR redeploys the book at `/`
+- [ ] the diff page shows the change's discussion; signed in, replying,
+      request-changes, approve and merge all work from that page
+- [ ] merging a PR redeploys the book at `/book/`
+- [ ] with `[oauth] client_id` in `book.toml`: one-click sign-in on the
+      site completes without pasting a token (needs HTTPS or localhost —
+      the PKCE flow uses WebCrypto)
