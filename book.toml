@@ -9,6 +9,9 @@ title = "Collective Knowledge"
 
 # One-click sign-in on the published site: a *public* OAuth2 app (PKCE,
 # no secret) on the Forgejo instance — infra/bootstrap.sh registers one
-# and prints its client_id. Pasted tokens work without this.
+# and prints its client_id. The forge itself authenticates people via
+# ORCID (the account service — see infra/README.md), so label the button
+# accordingly. Pasted tokens work without this.
 # [oauth]
 # client_id = "<Forgejo OAuth2 app client id>"
+# label = "Sign in with ORCID"

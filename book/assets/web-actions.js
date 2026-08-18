@@ -149,17 +149,17 @@
       var host = "";
       try { host = new URL(cfg.base).host; } catch (e) { /* keep generic */ }
       var oauthBtn = el("button", "bk-btn bk-btn-primary",
-        "Sign in" + (host ? " at " + host : ""));
+        cfg.oauth.label || ("Sign in" + (host ? " at " + host : "")));
       oauthBtn.style.width = "100%";
       oauthBtn.onclick = function () { startOAuth(cfg); };
       wrap.appendChild(oauthBtn);
       wrap.appendChild(el("p", "bk-hint", "— or paste a token —"));
     }
     var p = el("p", "bk-hint");
-    p.textContent = "Paste your Forgejo application token (forge Settings → " +
-      "Applications → Generate token, with repository and issue read/write " +
-      "scope — or the token your instructor gave you). It is stored only " +
-      "in this browser and sent only to the forge API.";
+    p.textContent = "Paste a forge application token (after signing in to " +
+      "the forge, Settings → Applications → Generate token, with repository " +
+      "and issue read/write scope). It is stored only in this browser and " +
+      "sent only to the forge API.";
     var input = el("input", "bk-ta");
     input.type = "password";
     input.placeholder = "token";

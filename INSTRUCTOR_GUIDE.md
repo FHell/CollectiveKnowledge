@@ -45,8 +45,9 @@ CI rebuilds and redeploys the public book on every merge.
 
 ## Web-only workflow (published site, any device)
 
-The published book site is itself a review surface. Sign in once with
-your token (bottom-right corner):
+The published book site is itself a review surface. Sign in once
+(bottom-right corner — one click via ORCID, or paste a forge
+application token):
 
 - the landing page lists **changes under review**, each linking to its
   rendered diff;

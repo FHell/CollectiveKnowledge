@@ -5,6 +5,10 @@ instructor reviews rendered diffs, edits, approves and vouches, and
 everyone discusses proposed edits — via a local CLI workflow or entirely
 in the browser. The backend is a **self-hosted Forgejo**: repository,
 accounts, changes and every discussion live on your own infrastructure.
+Identity comes from **ORCID** — signing in with an ORCID iD is the one
+way into the system, and the first sign-in auto-creates the forge
+account with the ORCID iD as the username, so contributions carry a
+verifiable scholarly identity.
 
 **Key principles:** metadata lives in git (vouches are committed to
 `meta/`), the forge stays unmodified, and the `book` CLI and the
@@ -31,8 +35,9 @@ in-browser client are both thin layers over git + the Forgejo REST API.
 The deployed system serves a static site (see `infra/`): a landing page
 with the live list of changes under review, the rendered book, and one
 diff page per open change. Anonymous visitors can read everything —
-book, authorship, vouches, diffs, discussions. Signed in (pasted Forgejo
-token, or one-click OAuth2+PKCE — no client secret, no extra service):
+book, authorship, vouches, diffs, discussions. Signing in is one click:
+**site → forge (OAuth2+PKCE, no client secret) → ORCID**; a pasted forge
+application token also works (e.g. for the CLI). Signed in:
 
 - **tap a paragraph** on a book page to see blame + vouches and to
   **discuss** (opens a forge issue keyed to the paragraph's content
